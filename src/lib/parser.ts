@@ -9,25 +9,47 @@ import { detectLanguage, getSpec, isExtractable } from './langdetect.js';
 import { stripCommentsAndStrings } from './strip.js';
 import { getPatterns, type SymbolPattern, type ImportPattern, type CallPattern } from './patterns.js';
 
+/**
+ * Result of parsing a single file.
+ * Contains extracted symbols, imports, and call sites.
+ */
 export interface ParseResult {
+  /** Detected programming language (e.g., 'typescript', 'python'). */
   language: string;
+  /** Extracted symbol definitions (functions, classes, etc.). */
   symbols: SymbolInfo[];
+  /** Import statements and module references. */
   imports: ImportEdge[];
+  /** Call sites (function calls within the file). */
   calls: CallSite[];
+  /** Count of parsing errors (incomplete extraction). */
   parseErrors: number;
+  /** Parser backend used ('lexical' for pure JS, 'tree-sitter' for precision). */
   backend: 'lexical';
 }
 
 const KEYWORDS = new Set([
-  'if','else','for','while','do','return','break','continue','switch','case','default','try','catch','finally','throw','new','delete','typeof','instanceof','in','of','this','super','extends','implements','interface','enum','const','let','var','function','class','static','public','private','protected','abstract','final','async','await','yield','import','export','from','as','default','namespace','using','typedef','struct','union','extern','inline','virtual','override','readonly','get','set','declare','module','type','is','not','and','or','nil','null','true','false','undefined','void','int','float','double','char','bool','string','byte','long','short','signed','unsigned','auto','register','volatile','goto','sizeof','def','elif','lambda','pass','with','global','nonlocal','raise','assert','del','print','end','begin','then','require','unless','until','next','redo','retry','defined','self',
+  'if','else','for','while','do','return','break','continue','switch','case','default','try','catch','finally','throw','new','delete','typeof','instanceof','in','of','this','super','extends','impl','impl','const','let','var','function','class','interface','type','enum','module','namespace','static','public','private','protected','async','await','yield','export','import','default',
 ]);
 
+/**
+ * Check if a string is a valid identifier (not a keyword).
+ * @param name Identifier candidate.
+ * @returns True if valid identifier.
+ */
 function isValidIdent(name: string): boolean {
   if (!name || name.length < 1 || name.length > 200) return false;
   if (!/[A-Za-z_$]/.test(name[0]!)) return false;
   return !KEYWORDS.has(name);
 }
 
+/**
+ * Find the end line of a symbol (closing brace or semicolon).
+ * Heuristic: search up to 500 lines ahead, tracking brace depth.
+ * @param lines File lines (1-indexed for return value).
+ * @param startIdx Starting line index (0-indexed).
+ * @returns 1-indexed end line number.
+ */
 function findEndLine(lines: string[], startIdx: number): number {
   let depth = 0;
   let foundOpen = false;
@@ -45,6 +67,14 @@ function findEndLine(lines: string[], startIdx: number): number {
 
 const SCOPE_KINDS = new Set<SymbolKind>(['class','struct','interface','trait','impl','module']);
 
+/**
+ * Extract symbol definitions from stripped code.
+ * Tracks scope (class vs module-level) to assign qualified names.
+ * @param stripped Code with comments/strings removed.
+ * @param relFile File path (for symbol IDs).
+ * @param patterns Symbol patterns for this language.
+ * @returns Extracted symbols and scope map (line → current class/scope).
+ */
 function extractSymbols(stripped: string, relFile: string, patterns: SymbolPattern[]): { symbols: SymbolInfo[]; scopeMap: Map<number, string> } {
   const lines = stripped.split('\n');
   const symbols: SymbolInfo[] = [];
@@ -72,7 +102,7 @@ function extractSymbols(stripped: string, relFile: string, patterns: SymbolPatte
           const id = `${relFile}::${name}`;
           if (!seen.has(id)) {
             seen.add(id);
-            symbols.push({ id, name, qualname: name, kind: pat.kind as SymbolKind, file: relFile, startLine: lineNum, endLine: findEndLine(lines, li), exported: pat.exportedPrefix ? line.includes(pat.exportedPrefix) : false });
+            symbols.push({ id, name, qualname: name, kind: pat.kind as SymbolKind, file: relFile, startLine: lineNum, endLine: findEndLine(lines, li), exported: pat.exportedPrefix ? line.includes(pat.exportedPrefix) : false, parent: undefined });
           }
           break;
         }
@@ -92,7 +122,7 @@ function extractSymbols(stripped: string, relFile: string, patterns: SymbolPatte
         const id = `${relFile}::${qualname}`;
         if (seen.has(id)) { if (m.index === pat.regex.lastIndex) pat.regex.lastIndex++; continue; }
         seen.add(id);
-        symbols.push({ id, name, qualname, kind: pat.kind as SymbolKind, file: relFile, startLine: lineNum, endLine: findEndLine(lines, li), exported: pat.exportedPrefix ? line.includes(pat.exportedPrefix) : false, parent: pat.requiresClassScope && currentClass ? currentClass : undefined });
+        symbols.push({ id, name, qualname, kind: pat.kind as SymbolKind, file: relFile, startLine: lineNum, endLine: findEndLine(lines, li), exported: pat.exportedPrefix ? line.includes(pat.exportedPrefix) : false, parent: currentClass ?? undefined });
         if (m.index === pat.regex.lastIndex) pat.regex.lastIndex++;
       }
     }
@@ -102,6 +132,14 @@ function extractSymbols(stripped: string, relFile: string, patterns: SymbolPatte
   return { symbols, scopeMap };
 }
 
+/**
+ * Extract import statements from code.
+ * Handles ES6 imports, CommonJS requires, and dynamic imports.
+ * @param stripped Code with comments/strings removed.
+ * @param relFile File path (for edge source).
+ * @param patterns Import patterns for this language.
+ * @returns Import edges (target path resolved later).
+ */
 function extractImports(stripped: string, relFile: string, patterns: ImportPattern[]): ImportEdge[] {
   const lines = stripped.split('\n');
   const imports: ImportEdge[] = [];
@@ -123,6 +161,15 @@ function extractImports(stripped: string, relFile: string, patterns: ImportPatte
   return imports;
 }
 
+/**
+ * Extract call sites from code.
+ * Matches function calls and resolves them to local symbols when possible.
+ * @param stripped Code with comments/strings removed.
+ * @param relFile File path (for call source).
+ * @param callPatterns Call patterns for this language.
+ * @param symbols Local symbols (for resolution).
+ * @returns Call sites (calleeId null if unresolved).
+ */
 function extractCalls(stripped: string, relFile: string, callPatterns: CallPattern[], symbols: SymbolInfo[]): CallSite[] {
   const lines = stripped.split('\n');
   const calls: CallSite[] = [];
@@ -153,6 +200,13 @@ function extractCalls(stripped: string, relFile: string, callPatterns: CallPatte
   return calls;
 }
 
+/**
+ * Parse a single file and extract symbols, imports, and calls.
+ * Error-tolerant: broken code yields partial results, never throws.
+ * @param relPath File path (for language detection and symbol IDs).
+ * @param text File contents.
+ * @returns ParseResult with extracted data and parse error count.
+ */
 export function parseFile(relPath: string, text: string): ParseResult {
   const language = detectLanguage(relPath);
   if (!language || !isExtractable(language)) return { language: language ?? 'unknown', symbols: [], imports: [], calls: [], parseErrors: 0, backend: 'lexical' };
