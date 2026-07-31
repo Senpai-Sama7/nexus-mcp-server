@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "nexus": {
+      "command": "node",
+      "args": ["/home/donovan/Projects/nexus-mcp-server/dist/server.js"],
+      "env": {
+        "NEXUS_WORKSPACE": "/home/donovan/Projects/nexus-mcp-server",
+        "NEXUS_LOG_LEVEL": "info"
+      },
+      "disabled": false,
+      "autoApprove": []
+    },
+    "nexus-sdlc": {
+      "command": "node",
+      "args": ["/home/donovan/Projects/nexus-mcp-server/dist/server.js"],
+      "env": {
+        "NEXUS_WORKSPACE": "/home/donovan/Projects/autonomous-sdlc-command-center",
+        "NEXUS_LOG_LEVEL": "info"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

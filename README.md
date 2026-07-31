@@ -10,6 +10,65 @@ engineered context, verified execution, and deterministic orchestration.
 
 ---
 
+## Quick Install (Cline CLI / Claude Desktop / Cursor / etc.)
+
+```bash
+git clone https://github.com/Senpai-Sama7/nexus-mcp-server.git
+cd nexus-mcp-server
+npm install
+npm run build
+
+# Install MCP config for all detected clients (Cline CLI, Claude Desktop, Cursor, Windsurf, Gemini)
+./install-mcp.sh /path/to/project1 /path/to/project2
+```
+
+The `install-mcp.sh` script writes a `cline_mcp_settings.json` (and equivalents for other clients) that registers one NEXUS MCP server instance per workspace. Each instance points at a different `NEXUS_WORKSPACE` so you get a separate code index per project.
+
+---
+
+## Manual Configuration
+
+### Cline CLI (`~/.cline/cline_mcp_settings.json`)
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "command": "node",
+      "args": ["/path/to/nexus-mcp-server/dist/server.js"],
+      "env": { "NEXUS_WORKSPACE": "/path/to/your/project" },
+      "disabled": false
+    },
+    "nexus-other-project": {
+      "command": "node",
+      "args": ["/path/to/nexus-mcp-server/dist/server.js"],
+      "env": { "NEXUS_WORKSPACE": "/path/to/another/project" },
+      "disabled": false
+    }
+  }
+}
+```
+
+### Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS)
+Same `mcpServers` format as above.
+
+### Cline VSCode extension
+`~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` — same format.
+
+### Claude Code (`.mcp.json` in your project root)
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "command": "node",
+      "args": ["./nexus-mcp-server/dist/server.js"],
+      "env": { "NEXUS_WORKSPACE": "${workspaceFolder}" }
+    }
+  }
+}
+```
+
+---
+
 ## Why NEXUS?
 
 Every current coding agent has 10 structural gaps. NEXUS fills all 10:
@@ -24,49 +83,6 @@ Every current coding agent has 10 structural gaps. NEXUS fills all 10:
 8. Agents get huge unreadable tool dumps → **NEXUS paginates with cursors + head/tail truncation**
 9. Agents lose state on crash → **NEXUS snapshots files and checkpoints task state**
 10. Agents can't see the project at a glance → **NEXUS workspace health + map on demand**
-
----
-
-## Install
-
-```bash
-git clone <this repo>
-cd nexus-mcp-server
-npm install
-npm run build
-```
-
-The server is now at `dist/server.js`. Configure your MCP client to launch it.
-
----
-
-## MCP Client Configuration
-
-### Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS)
-```json
-{
-  "mcpServers": {
-    "nexus": {
-      "command": "node",
-      "args": ["/path/to/nexus-mcp-server/dist/server.js"],
-      "env": { "NEXUS_WORKSPACE": "/path/to/your/project", "NEXUS_LOG_LEVEL": "info" }
-    }
-  }
-}
-```
-
-### Claude Code / Cline (`.mcp.json` in your project root)
-```json
-{
-  "mcpServers": {
-    "nexus": {
-      "command": "node",
-      "args": ["./nexus-mcp-server/dist/server.js"],
-      "env": { "NEXUS_WORKSPACE": "${workspaceFolder}" }
-    }
-  }
-}
-```
 
 ---
 
@@ -177,6 +193,7 @@ The server is now at `dist/server.js`. Configure your MCP client to launch it.
 - **Atomic persistence** — tmp-file + rename for index, memory, snapshots
 - **LRU memory caps** — never unbounded growth
 - **Tool annotations** — truthful `readOnlyHint` / `destructiveHint` / `idempotentHint` / `openWorldHint`
+- **Multi-workspace** — run multiple NEXUS instances, each indexing a different project
 
 ---
 
