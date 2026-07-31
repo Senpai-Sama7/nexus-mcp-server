@@ -40,8 +40,9 @@ export async function getGitState(cwd: string): Promise<GitState> {
   // Check for merge/rebase
   const mergeResult = await execCommand({ cwd, command: 'test', args: ['-d', '.git/MERGE_HEAD'], timeoutMs: 2000 });
   state.merging = mergeResult.exitCode === 0;
- const rebaseResult = await execCommand({ cwd, command: 'test', args: ['-d', '.git/rebase-merge'], timeoutMs: 2000 });
+  const rebaseResult = await execCommand({ cwd, command: 'test', args: ['-d', '.git/rebase-merge'], timeoutMs: 2000 });
   state.rebasing = rebaseResult.exitCode === 0;
+
   return state;
 }
 

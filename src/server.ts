@@ -1,6 +1,6 @@
 /**
  * NEXUS MCP Server — god-tier code intelligence for agentic coding agents.
- * 30 tools across 10 families: workspace, code intelligence, context,
+ * 31 tools across 10 families: workspace, code intelligence, context,
  * change safety, execution, memory, orchestration, security, refactor, meta.
  */
 
@@ -42,7 +42,7 @@ async function main() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  log.info('nexus server started', { root, tools: 30 });
+  log.info('nexus server started', { root, tools: 31 });
 }
 
 main().catch((e) => { log.error('fatal', { error: (e as Error).message }); process.exit(1); });

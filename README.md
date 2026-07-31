@@ -18,7 +18,7 @@ cd nexus-mcp-server
 npm install
 npm run build
 
-# Install MCP config for all detected clients (Cline CLI, Claude Desktop, Cursor, Windsurf, Gemini)
+# Install MCP config for all detected clients (Cline CLI, Claude Desktop, Cursor, Windsurf, Gemini, OpenCode)
 ./install-mcp.sh /path/to/project1 /path/to/project2
 ```
 
@@ -66,6 +66,63 @@ Same `mcpServers` format as above.
   }
 }
 ```
+
+---
+
+### OpenCode (`~/.config/opencode/opencode.jsonc`)
+OpenCode uses a different MCP schema — `mcp` keyed by server name, `command`
+as an array, environment under `environment`, plus `enabled`/`timeout`:
+
+```jsonc
+{
+  "mcp": {
+    "nexus": {
+      "type": "local",
+      "command": ["node", "/path/to/nexus-mcp-server/dist/server.js"],
+      "environment": {
+        "NEXUS_WORKSPACE": "/path/to/your/project",
+        "NEXUS_LOG_LEVEL": "info"
+      },
+      "enabled": true,
+      "timeout": 15000
+    },
+    "nexus-other-project": {
+      "type": "local",
+      "command": ["node", "/path/to/nexus-mcp-server/dist/server.js"],
+      "environment": {
+        "NEXUS_WORKSPACE": "/path/to/another/project",
+        "NEXUS_LOG_LEVEL": "info"
+      },
+      "enabled": true,
+      "timeout": 15000
+    }
+  }
+}
+```
+
+### Gemini CLI (`~/.gemini/settings.json`)
+Same `mcpServers` shape as Cline CLI:
+
+```json
+{
+  "mcpServers": {
+    "nexus": {
+      "command": "node",
+      "args": ["/path/to/nexus-mcp-server/dist/server.js"],
+      "env": { "NEXUS_WORKSPACE": "/path/to/your/project", "NEXUS_LOG_LEVEL": "info" }
+    },
+    "nexus-other-project": {
+      "command": "node",
+      "args": ["/path/to/nexus-mcp-server/dist/server.js"],
+      "env": { "NEXUS_WORKSPACE": "/path/to/another/project", "NEXUS_LOG_LEVEL": "info" }
+    }
+  }
+}
+```
+
+### Cursor (`~/.cursor/mcp.json`)
+### Windsurf (`~/.codeium/windsurf/mcp_config.json`)
+Both use the same `mcpServers` format as Cline CLI above.
 
 ---
 

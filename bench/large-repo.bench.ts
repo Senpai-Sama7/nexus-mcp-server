@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { performance } from 'node:perf_hooks';
-import { pageRank, buildFileGraph, createDiGraph, addEdge } from '../../src/lib/graph.js';
-import { estimateTokens } from '../../src/types.js';
-import type { CodeIndexSnapshot } from '../../src/types.js';
+import { pageRank, buildFileGraph, createDiGraph, addEdge } from '../src/lib/graph.js';
+import { estimateTokens } from '../src/types.js';
+import type { CodeIndexSnapshot } from '../src/types.js';
 
 /**
  * Performance benchmarks for NEXUS engines.

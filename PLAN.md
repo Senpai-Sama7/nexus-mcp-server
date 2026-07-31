@@ -121,7 +121,7 @@
 +------------------- MCP Client (CLI coding agent) -------------------+
 +--------------------------- stdio JSON-RPC --------------------------+
 +---------------------------- NEXUS SERVER ----------------------------+
-|  Protocol Layer   tools.ts (30 tools) - pagination - progress - dual |
+ |  Protocol Layer   tools.ts (31 tools) - pagination - progress - dual |
 |-----------------------------------------------------------------------|
 |  Engines                                                              |
 |   +- CodeIntel    walker -> parser backends (tree-sitter|lexical)     |
@@ -139,7 +139,7 @@
 +-----------------------------------------------------------------------+
 ```
 
-## 4. Tool Surface (30 tools, 10 families)
+## 4. Tool Surface (31 tools, 10 families)
 
 **A. Workspace** — 1 `nexus_workspace_overview` (languages/LOC/git/index health) · 2 `nexus_search` (regex|literal|glob|fuzzy, gitignore-aware) · 3 `nexus_read_span` (multi-range reads, encoding-safe)
 **B. Code intelligence** — 4 `nexus_index_build` · 5 `nexus_file_symbols` · 6 `nexus_find_symbols` · 7 `nexus_references` · 8 `nexus_call_graph` · 9 `nexus_dependency_graph`

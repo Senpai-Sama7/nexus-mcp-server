@@ -6,9 +6,11 @@
  *  - imports:  dependency edges (import/require/use/include)
  *  - calls:    function-call sites (for call-graph edges)
  *
- * Patterns operate on the STRIPPED source (comments + string contents
- * already blanked by strip.ts) so false positives inside comments/strings
- * are eliminated.
+ * Symbol & call patterns operate on the STRIPPED source (comments +
+ * string contents blanked by strip.ts) so false positives inside
+ * comments/strings are eliminated. Import patterns run against RAW source,
+ * however — specifiers are string literals that stripping would blank — so
+ * extractImports receives raw text, not stripped text (see parser.ts).
  *
  * The patterns are intentionally permissive: a lexical parser trades
  * precision for coverage. False positives are mitigated by the graph

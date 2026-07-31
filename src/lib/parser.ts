@@ -135,13 +135,14 @@ function extractSymbols(stripped: string, relFile: string, patterns: SymbolPatte
 /**
  * Extract import statements from code.
  * Handles ES6 imports, CommonJS requires, and dynamic imports.
- * @param stripped Code with comments/strings removed.
+ * @param source Raw source text — import specifiers are string literals whose
+ *   contents stripCommentsAndStrings blanks, so imports MUST use raw text.
  * @param relFile File path (for edge source).
  * @param patterns Import patterns for this language.
  * @returns Import edges (target path resolved later).
  */
-function extractImports(stripped: string, relFile: string, patterns: ImportPattern[]): ImportEdge[] {
-  const lines = stripped.split('\n');
+function extractImports(source: string, relFile: string, patterns: ImportPattern[]): ImportEdge[] {
+  const lines = source.split('\n');
   const imports: ImportEdge[] = [];
   for (let li = 0; li < lines.length; li++) {
     const line = lines[li]!;
